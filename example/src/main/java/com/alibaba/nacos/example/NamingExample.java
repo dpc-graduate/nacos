@@ -23,10 +23,10 @@ import com.alibaba.nacos.api.naming.listener.AbstractEventListener;
 import com.alibaba.nacos.api.naming.listener.Event;
 import com.alibaba.nacos.api.naming.listener.NamingEvent;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -39,26 +39,22 @@ import java.util.concurrent.TimeUnit;
  */
 public class NamingExample {
     
-    public static void main(String[] args) throws NacosException, InterruptedException {
+    public static void main(String[] args) throws NacosException, InterruptedException, IOException {
         
         Properties properties = new Properties();
-        properties.setProperty("serverAddr", System.getProperty("serverAddr"));
-        properties.setProperty("namespace", System.getProperty("namespace"));
+        properties.setProperty("serverAddr", "localhost");
+        properties.setProperty("namespace", "dev");
         
         NamingService naming = NamingFactory.createNamingService(properties);
         
         naming.registerInstance("nacos.test.3", "11.11.11.11", 8888, "TEST1");
         
         System.out.println("instances after register: " + naming.getAllInstances("nacos.test.3"));
-        
         Executor executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-                new ThreadFactory() {
-                    @Override
-                    public Thread newThread(Runnable r) {
-                        Thread thread = new Thread(r);
-                        thread.setName("test-thread");
-                        return thread;
-                    }
+                r -> {
+                    Thread thread = new Thread(r);
+                    thread.setName("test-thread");
+                    return thread;
                 });
         
         naming.subscribe("nacos.test.3", new AbstractEventListener() {
